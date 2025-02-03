@@ -788,15 +788,15 @@ void ofxPlayhead::keyPressed(ofKeyEventArgs &key){
         case ' ':
             this->togglePause();
             return;
-        case OF_KEY_LEFT:
-        case OF_KEY_RIGHT:
+        case '[':
+        case ']':
             if(isPaused()){
-                this->nextFrame(key.keycode==OF_KEY_LEFT?-1:1);
+                this->nextFrame(key.key=='['?-1:1);
             }
             return;
         case 'l':
+        case 'L':
             if(!hasModifier){
-                std::cout << "l-switch" << std::endl;
                 switch(this->loopMode){
                     case NoLoop :
                         this->setLoop(LoopOnce);
@@ -811,6 +811,7 @@ void ofxPlayhead::keyPressed(ofKeyEventArgs &key){
             }
             break;
         case 'm':
+        case 'M':
             if(!hasModifier){
                 switch(this->playbackMode){
                     case ofxPlayheadMode_RealTime_Relative:

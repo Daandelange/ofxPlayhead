@@ -2,6 +2,8 @@
 
 **ofxPlayhead is `ofGetElapsedTime()` on steroids.**
 
+[!ofxPlayhead](./ofxPlayhead_screenshot.png)
+
 ## Description
 
 This utility class basically provides a playhead position with playback capabilities and time accessors for your compositions.

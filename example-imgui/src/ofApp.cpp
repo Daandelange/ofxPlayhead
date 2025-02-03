@@ -77,24 +77,38 @@ void ofApp::draw(){
     ofFill();
 
     ofRectangle wr = gui.getMainWindowViewportRect();
-
     const glm::vec2 ws ={wr.getWidth(), wr.getHeight()};
-    ofDrawBitmapStringHighlight("Absolute Animation", wr.getTopLeft()+ws*glm::vec2(0.5, 0.3));
+
+    // Display keyboard shortcuts
+    glm::vec2 txtPos = wr.getTopLeft()+ws*glm::vec2(0.05, 0.8);
+    ofDrawBitmapStringHighlight("Keyboard Shortcuts", txtPos); txtPos.y += 16;
+    ofDrawBitmapStringHighlight("- - - - - - - - - -", txtPos); txtPos.y += 16;
+    ofDrawBitmapStringHighlight("space   Play/Pause", txtPos); txtPos.y += 16;
+    ofDrawBitmapStringHighlight("L       Toggle loop mode", txtPos); txtPos.y += 16;
+    ofDrawBitmapStringHighlight("M       Toggle playback mode", txtPos); txtPos.y += 16;
+    ofDrawBitmapStringHighlight("[ and ] Prev/Next frame (paused only)", txtPos); txtPos.y += 16;
+
+
+    // Absolute animation
+    ofDrawBitmapStringHighlight("Absolute Animation", wr.getTopLeft()+ws*glm::vec2(0.5, 0.35));
     ofDrawCircle(wr.getTopLeft()+ws*glm::vec2(playhead.getProgress(), 0.4), 10);
 
+    // Simulation Animation
     static glm::vec2 posSim(0.0, ws.y*0.7);
-
     posSim.y = ws.y*0.7;
     static bool bUseSeekDelta = true;
     const double totalDelta = playhead.getCounters().tDelta+playhead.getCounters().tDeltaSeek*bUseSeekDelta;
     if(ws.x!=0) posSim.x = glm::mod<double>((posSim.x+(ws.x*totalDelta/playhead.getDuration())), ws.x);
-    ofDrawBitmapStringHighlight("Simulation Delta Animation\n(doesn't support seeking)", wr.getTopLeft()+ws*glm::vec2(0.5, 0.6));
+    ofDrawBitmapStringHighlight("Simulation Delta Animation\n(doesn't support seeking)", wr.getTopLeft()+ws*glm::vec2(0.5, 0.65));
     ofDrawCircle(wr.getTopLeft()+posSim, 10);
 
+    // Visualise the offset
     ofSetColor(255,0,0,155);
     ofSetLineWidth(3);
     ofDrawLine(wr.getTopLeft()+posSim, wr.getTopLeft()+ws*glm::vec2(playhead.getProgress(), 0.7));
 
+
+    // Draw GUI
 #ifdef ofxAddons_ENABLE_IMGUI
     gui.begin();
 
