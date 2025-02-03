@@ -6,6 +6,10 @@
 
 #include "ofUtils.h" // ofToString
 
+#ifdef ofxAddons_ENABLE_IMGUI
+const double ofxPlayhead::speedMin = -10;
+const double ofxPlayhead::speedMax = -10;
+#endif
 // - - - - - - - - - -
 
 ofxPHTimeSignature::ofxPHTimeSignature(unsigned int _bars, unsigned int _noteValue, unsigned int _bpm){
@@ -837,306 +841,71 @@ void ofxPlayhead::keyPressed(ofKeyEventArgs &key){
 }
 
 #ifdef ofxAddons_ENABLE_IMGUI
-void ofxPlayhead::drawImGuiPlayControls(bool horizontalLayout){
+void ofxPlayhead::drawImGuiFullWidget(bool horizontalLayout){
     ImGui::PushID((const void *)this);
 
+    // Todo: unstatic these !
     static bool bShowSettings = false, bShowRamps = false;
-    static double speedMin=-10, speedMax=10;
 
-    // Show "tabs" / Settings toggle
-    ImGui::BeginGroup();
-    ImVec2 pos = ImGui::GetCursorScreenPos();
-    if(ImGui::Button("T##tab-time")){
-        bShowSettings = false;
-        bShowRamps = false;
-    }
-    if(ImGui::IsItemActive() || ImGui::IsItemHovered()){
-        pos.x += 20;
-        ImGui::GetForegroundDrawList()->AddRectFilled(pos, pos+ImVec2(35.f, ImGui::GetFrameHeight()), ImGui::GetColorU32(ImGuiCol_Button, 1.f));
-        ImGui::GetForegroundDrawList()->AddText(pos+ImVec2(3,3), ImGui::GetColorU32(ImGuiCol_Text), "Time");
-    }
+    // TABS
+    {
+        // Show "tabs" / Settings toggle
+        ImGui::BeginGroup();
+        ImVec2 pos = ImGui::GetCursorScreenPos();
+        if(ImGui::Button("T##tab-time")){
+            bShowSettings = false;
+            bShowRamps = false;
+        }
+        if(ImGui::IsItemActive() || ImGui::IsItemHovered()){
+            pos.x += 20;
+            ImGui::GetForegroundDrawList()->AddRectFilled(pos, pos+ImVec2(35.f, ImGui::GetFrameHeight()), ImGui::GetColorU32(ImGuiCol_Button, 1.f));
+            ImGui::GetForegroundDrawList()->AddText(pos+ImVec2(3,3), ImGui::GetColorU32(ImGuiCol_Text), "Time");
+        }
 
-    pos = ImGui::GetCursorScreenPos();
-    if(ImGui::Button("S##tab-settings")){
-        bShowSettings = true;
-        bShowRamps = false;
-    }
-    if(ImGui::IsItemActive() || ImGui::IsItemHovered()){
-        pos.x += 20;
-        ImGui::GetForegroundDrawList()->AddRectFilled(pos, pos+ImVec2(58.f, ImGui::GetFrameHeight()), ImGui::GetColorU32(ImGuiCol_Button, 1.f));
-        ImGui::GetForegroundDrawList()->AddText(pos+ImVec2(3,3), ImGui::GetColorU32(ImGuiCol_Text), "Settings");
-    }
+        pos = ImGui::GetCursorScreenPos();
+        if(ImGui::Button("S##tab-settings")){
+            bShowSettings = true;
+            bShowRamps = false;
+        }
+        if(ImGui::IsItemActive() || ImGui::IsItemHovered()){
+            pos.x += 20;
+            ImGui::GetForegroundDrawList()->AddRectFilled(pos, pos+ImVec2(58.f, ImGui::GetFrameHeight()), ImGui::GetColorU32(ImGuiCol_Button, 1.f));
+            ImGui::GetForegroundDrawList()->AddText(pos+ImVec2(3,3), ImGui::GetColorU32(ImGuiCol_Text), "Settings");
+        }
 
-    pos = ImGui::GetCursorScreenPos();
-    if(ImGui::Button("R##settings-ramps")){
-        bShowSettings = false;
-        bShowRamps = true;
-    }
-    if(ImGui::IsItemActive() || ImGui::IsItemHovered()){
-        pos.x += 20;
-        ImGui::GetForegroundDrawList()->AddRectFilled(pos, pos+ImVec2(42.f, ImGui::GetFrameHeight()), ImGui::GetColorU32(ImGuiCol_Button, 1.f));
-        ImGui::GetForegroundDrawList()->AddText(pos+ImVec2(3,3), ImGui::GetColorU32(ImGuiCol_Text), "Ramps");
-    }
+        pos = ImGui::GetCursorScreenPos();
+        if(ImGui::Button("R##settings-ramps")){
+            bShowSettings = false;
+            bShowRamps = true;
+        }
+        if(ImGui::IsItemActive() || ImGui::IsItemHovered()){
+            pos.x += 20;
+            ImGui::GetForegroundDrawList()->AddRectFilled(pos, pos+ImVec2(42.f, ImGui::GetFrameHeight()), ImGui::GetColorU32(ImGuiCol_Button, 1.f));
+            ImGui::GetForegroundDrawList()->AddText(pos+ImVec2(3,3), ImGui::GetColorU32(ImGuiCol_Text), "Ramps");
+        }
 
-    ImGui::EndGroup();
+        ImGui::EndGroup();
+    }
 
     if(horizontalLayout) ImGui::SameLine();
 
+    // SETTINGS
     if(bShowSettings){
-        // Time signature
-        ImGui::BeginGroup();
-
-        // Time Signature
-        ImGui::PushItemWidth(60);
-
-        ImGui::SeparatorText("TimeSig");
-        // Time Signature Info
-        ImGui::SameLine();
-    //            int posX = ImGui::GetCursorPosX();
-    //            ImGui::SetCursorPosX(posX-10);
-        if (ImGuiEx::BeginHelpMarker("[i]")){
-            ImGui::SeparatorText("TS Info");
-            ImGui::Text("1 beat = %.3fsec", timeSignature.getBeatDurationSecs());
-            ImGui::Text("1 bar = %.3fsec", timeSignature.getBarDurationSecs());
-            ImGui::Text("1 note = %.3fsec", timeSignature.getNoteDurationSecs());
-            ImGuiEx::EndHelpMarker();
-        }
-
-        static unsigned int bpmMin = 1, bpmMax=512;
-        if(ImGui::DragScalar("BPM", ImGuiDataType_U16, &timeSignature.bpm, 1.f, &bpmMin, &bpmMax, "%u")){
-            timeSignature.updateValues();
-        }
-        static unsigned int noteStep = 1, noteStepFast=1;
-        if(ImGui::InputScalar("Bars", ImGuiDataType_U16, &timeSignature.beatsPerBar, &noteStep, &noteStepFast, "%u")){
-            timeSignature.updateValues();
-        }
-        if(ImGui::InputScalar("Notes", ImGuiDataType_U16, &timeSignature.notesPerBeat, &noteStep, &noteStepFast, "%u")){
-            timeSignature.updateValues();
-        }
-        ImGui::PopItemWidth();
-        ImGui::EndGroup();
-
-        if(horizontalLayout) {
-            ImGui::SameLine();
-            ImGui::Dummy({8,8});
-            ImGui::SameLine();
-        }
-
-        // Playback
-        ImGui::BeginGroup();
-        if(horizontalLayout) ImGui::PushItemWidth(80);
-        ImGui::SeparatorText("Playback");
-
-        if(ImGui::InputScalar("Fps", ImGuiDataType_U16, &fps, &noteStep, &noteStepFast, "%u")){
-            //timeSignature.updateValues();
-        }
-
-        // Playback
-        static int currentPBMode=-1;
-        currentPBMode = playbackMode==ofxPlayheadMode::ofxPlayheadMode_RealTime_Absolute?0:(playbackMode==ofxPlayheadMode::ofxPlayheadMode_RealTime_Relative?1:2);
-        if(ImGui::Combo("Playback", &currentPBMode, "Real-time (absolute)\0Real-time (relative)\0Offline\0\0")){
-            setPlayMode(currentPBMode==0?ofxPlayheadMode::ofxPlayheadMode_RealTime_Absolute : (currentPBMode==1?ofxPlayheadMode::ofxPlayheadMode_RealTime_Relative : ofxPlayheadMode::ofxPlayheadMode_Offline));
-        }
-
-        // Looping
-        static int currentLoopMode=-1;
-        currentLoopMode = loopMode==ofxPlayheadLoopMode::NoLoop?0:(loopMode==ofxPlayheadLoopMode::LoopOnce?1:2);
-        if(ImGui::Combo("Loop", &currentLoopMode, "No Loop\0Loop Once\0Loop Infinite\0\0")){
-            loopMode = currentLoopMode==0?ofxPlayheadLoopMode::NoLoop:(currentLoopMode==1?ofxPlayheadLoopMode::LoopOnce:ofxPlayheadLoopMode::LoopInfinite);
-        }
-
-        // Play speed
-        double speed = playSpeed;
-        if(ImGui::DragScalar("Speed", ImGuiDataType_Double, &speed, 0.05f, &speedMin, &speedMax, "%7.3f")){
-            setPlaySpeed(speed);
-        }
-
-        if(horizontalLayout) ImGui::PopItemWidth();
-        ImGui::EndGroup();
-
-        if(horizontalLayout) ImGui::SameLine();
-
-        // Duration
-        ImGui::BeginGroup();
-        if(horizontalLayout) ImGui::PushItemWidth(80);
-        ImGui::SeparatorText("Duration");
-
-        unsigned int durationHours = glm::floor(duration/(3600));
-        unsigned int durationMinutes = glm::mod(glm::floor(duration/60), 60.);
-        unsigned int durationSeconds = glm::mod(duration, 60.);
-        static unsigned int durationMin = 0, durationHoursMax = 23, durationMinSecsMax=59;
-        bool updateDurations = false;
-        if(ImGui::DragScalar("##hours", ImGuiDataType_U16, &durationHours, 1.f, &durationMin, &durationHoursMax, "%u hours")){
-            updateDurations = true;
-        }
-        if(ImGui::DragScalar("##minutes", ImGuiDataType_U16, &durationMinutes, 1.f, &durationMin, &durationMinSecsMax, "%u mins")){
-            updateDurations = true;
-        }
-        if(ImGui::DragScalar("##seconds", ImGuiDataType_U16, &durationSeconds, 1.f, &durationMin, &durationMinSecsMax, "%u secs")){
-            updateDurations = true;
-        }
-
-        if(updateDurations){
-            duration = glm::max(durationHours*3600 + durationMinutes*60 + durationSeconds, 1u);
-        }
-        if(horizontalLayout) ImGui::PopItemWidth();
-        ImGui::EndGroup();
-
-        if(horizontalLayout) ImGui::SameLine();
-
-        // Duration info
-        ImGui::BeginGroup();
-        //if(horizontalLayout) ImGui::PushItemWidth(80);
-        ImGui::SeparatorText("Info");
-
-        ImGui::Text("Duration: %.0f sec", duration);
-        ImGui::Text("%u frames total", getTotalFrames());
-        ImGui::Text("x bars (measures)");
-        ImGui::Text("x notes");
-
-        //ImGui::Spacing();
-        //if(horizontalLayout) ImGui::PopItemWidth();
-        ImGui::EndGroup();
-
-        // More options
-        if(horizontalLayout) ImGui::SameLine();
-        ImGui::BeginGroup();
-        ImGui::SeparatorText("Advanced");
-
-        ImGui::Checkbox("Allow Lossy Operations", &bAllowLossyOperations);
-        ImGuiEx::ShowHelpMarker("Allows changing playMode and playSpeed while playing. Off is more robust.");
-
-        ImGui::EndGroup();
-
-
-        //if(horizontalLayout) ImGui::SameLine();
+        drawImGuiSettings(horizontalLayout);
     } // End settings
 
-    // Ramps
+    // RAMPS
     else if(bShowRamps){
-//        for(unsigned int i=0; i < ofxPHTL_Ramp_Hist_Size-1; i++){
-//            beatProgressHist[i] = beatProgressHist[i+1];
-//        }
-//        beatProgressHist[ofxPHTL_Ramp_Hist_Size-1] = timeRamps.beatProgress;
-
-        // Signals & Ramps
-        ImGui::BeginGroup();
-
-        // Bar Ramps
-        static float barProgressHist[ofxPHTL_Ramp_Hist_Size] = {0};
-        ImGuiEx::RampGraph("Bar progress: %.2f", barProgressHist, timeRamps.barProgress, !paused);
-        static float barPulseHist[ofxPHTL_Ramp_Hist_Size] = {0};
-        ImGuiEx::RampGraph("Bar pulse: %.2f", barPulseHist, timeRamps.barPulse, !paused);
-        static float barStepHist[ofxPHTL_Ramp_Hist_Size] = {0};
-        ImGuiEx::RampGraph("Bar Step: %.2f", barStepHist, timeRamps.barStep, !paused);
-
-        ImGui::Separator();
-
-        // Beat Ramps
-        static float beatProgressHist[ofxPHTL_Ramp_Hist_Size] = {0};
-        ImGuiEx::RampGraph("Beat Progress: %.2f", beatProgressHist, timeRamps.beatProgress, !paused);
-        static float beatPulseHist[ofxPHTL_Ramp_Hist_Size] = {0};
-        ImGuiEx::RampGraph("Beat Pulse: %.2f", beatPulseHist, timeRamps.beatPulse, !paused);
-        static float beatStepHist[ofxPHTL_Ramp_Hist_Size] = {0};
-        ImGuiEx::RampGraph("Beat Step: %.2f", beatStepHist, timeRamps.beatStep, !paused);
-
-        ImGui::Separator();
-
-        // Note Ramps
-        static float noteProgressHist[ofxPHTL_Ramp_Hist_Size] = {0};
-        ImGuiEx::RampGraph("Note Progress: %.2f", noteProgressHist, timeRamps.noteProgress, !paused);
-        static float notePulseHist[ofxPHTL_Ramp_Hist_Size] = {0};
-        ImGuiEx::RampGraph("Note Pulse: %.2f", notePulseHist, timeRamps.notePulse, !paused);
-        static float noteStepHist[ofxPHTL_Ramp_Hist_Size] = {0};
-        ImGuiEx::RampGraph("Note Step: %.2f", noteStepHist, timeRamps.noteStep, !paused);
-
-        ImGui::EndGroup(); // End Ramps group
+        drawImGuiRamps();
     } // end ramps section
 
     // Timer clock & Controls
     else {
-
-        // TimeSig
-        ImGui::BeginGroup();
-        ImGui::PushItemWidth(100);
-        //ImGui::BeginGroup();
-        //ImGui::SeparatorText("TimeSig");
-
-        ImGui::BeginDisabled();
-        //ImGui::Dummy({100,20});
-        ImGui::BeginGroup();
-        ImGui::Text("Bar");
-        ImGui::VSliderFloat("##barprogress", ImVec2(14, 50), &timeRamps.barProgress, 0.0f, 1.0f, "");
-        ImGui::SameLine();
-        ImGui::VSliderFloat("##barstep", ImVec2(6, 50), &timeRamps.barStep, 0.0f, 1.0f, "");
-        ImGui::Text("%04lu", counters.barCount%10000);
-        ImGui::EndGroup();
-        ImGui::SameLine();
-        ImGui::BeginGroup();
-        ImGui::Text("Beat");
-        ImGui::VSliderFloat("##beatprogress", ImVec2(14, 50), &timeRamps.beatProgress, 0.0f, 1.0f, "");
-        ImGui::SameLine();
-        ImGui::VSliderFloat("##beatstep", ImVec2(6, 50), &timeRamps.beatStep, 0.0f, 1.0f, "");
-        ImGui::Text("%04lu", counters.beatCount%10000);
-        ImGui::EndGroup();
-        ImGui::SameLine();
-        ImGui::BeginGroup();
-        ImGui::Text("Note");
-        ImGui::VSliderFloat("##noteprogress", ImVec2(14, 50), &timeRamps.noteProgress, 0.0f, 1.0f, "");
-        ImGui::SameLine();
-        ImGui::VSliderFloat("##notestep", ImVec2(6, 50), &timeRamps.noteStep, 0.0f, 1.0f, "");
-        ImGui::Text("%04lu", counters.noteCount%10000);
-        ImGui::EndGroup();
-
-        ImGui::EndDisabled();
-        //ImGui::EndGroup();
-        ImGui::PopItemWidth();
-        ImGui::EndGroup();
+        drawImGuiMetronom(horizontalLayout);
 
         if(horizontalLayout) ImGui::SameLine();
 
-        // Timers
-        ImGui::BeginGroup();
-
-        ImGui::BeginDisabled();
-
-        if(horizontalLayout){
-            ImGui::Dummy({30,5});
-            ImGui::SameLine();
-        }
-        ImGui::Text("Time");
-        ImGui::EndDisabled();
-
-        static bool bShowSecsWithMins = false;
-        double elapsed = getElapsedSeconds();
-        if(bShowSecsWithMins){
-            //unsigned int durationHours = glm::floor(elapsed/(3600));
-            unsigned int durationMinutes = glm::floor(glm::mod(glm::floor(elapsed/60), 60.));
-            unsigned int durationSeconds = glm::floor(glm::mod(elapsed, 60.));
-            unsigned int durationMs = glm::round(glm::mod(elapsed, 1.)*1000);
-            ImGui::Text(" %02u:%02u:%03u s", durationMinutes, durationSeconds, durationMs);
-        }
-        else ImGui::Text("%10.4f s", elapsed);
-        // Toggle display style on click
-        if(ImGui::IsItemClicked()){
-            bShowSecsWithMins = !bShowSecsWithMins;
-        }
-        // Show delta time on hover
-        else if(ImGui::IsItemHovered(ImGuiHoveredFlags_Stationary)){
-            if(ImGui::BeginTooltip()){
-                ImGui::Text("Delta time: %.5f sec", counters.tDelta);
-                ImGui::Text("Seek delta: %.5f sec", counters.tDeltaSeek);
-            }
-            ImGui::EndTooltip();
-        }
-        ImGui::Text("%10u f", getFrameNum());
-        ImGui::Text("%04lu.%02lu.%02lu tc", counters.barCount, counters.beatCount%timeSignature.beatsPerBar, counters.noteCount%timeSignature.notesPerBeat);
-        ImGui::Text("%10.6f %%", getProgress()*100);
-        //if(counters.loopCount>0) ImGui::Text("Loops   : %10lu", counters.loopCount);
-
-        //
-
-        ImGui::EndGroup(); // Timers
+        drawImGuiTimers(horizontalLayout);
 
         if(horizontalLayout){
             ImGui::SameLine();
@@ -1144,197 +913,469 @@ void ofxPlayhead::drawImGuiPlayControls(bool horizontalLayout){
             ImGui::SameLine();
         }
 
-        // Time
-        ImGui::BeginGroup();
-        //ImGui::SeparatorText("Time");
-        static double pHeadMin=0.;
-        ImVec2 barSize = {ImGui::GetContentRegionAvail().x, ImGui::GetFrameHeight()-2};
-        ImGui::Dummy({barSize.x, 8});
-        ImVec2 barPos = ImGui::GetCursorScreenPos();
-        double barScaleSecond = barSize.x / duration;
-        barPos.y+=1;
-        ImGui::SetNextItemWidth(barSize.x);
-        double phCopy = counters.playhead;
-        if(ImGui::SliderScalar("##Playhead",ImGuiDataType_Double, &phCopy, &pHeadMin, &duration, "" )){
-            goToSeconds(phCopy, false, false);
-        }
-
-        ImDrawList* wdl = ImGui::GetWindowDrawList();
-        //wdl->AddRect(barPos, barPos+barSize, IM_COL32(255,255,255,255));
-
-        // Draw Bars
-        unsigned int numBars = glm::floor(duration / timeSignature.getBarDurationSecs());
-        for(unsigned int bi=0; bi < numBars; bi++){
-            float posX = bi * timeSignature.getBarDurationSecs() * barScaleSecond;
-            wdl->AddLine({barPos.x+posX, barPos.y}, {barPos.x+posX, barPos.y+barSize.y}, ImGui::GetColorU32(ImGuiCol_TextDisabled));
-        }
-
-        // Draw Beats
-        unsigned int numBeats = glm::floor(duration / timeSignature.getBeatDurationSecs());
-        for(unsigned int bi=0; bi < numBeats; bi++){
-            float posX = bi * timeSignature.getBeatDurationSecs() * barScaleSecond;
-            wdl->AddLine({barPos.x+posX, barPos.y}, {barPos.x+posX, barPos.y+barSize.y}, ImGui::GetColorU32(ImGuiCol_TextDisabled, .2f));
-        }
-
-        // Draw seconds
-        int fontPixels = ImGui::GetFontSize();
-        double tScale = 10.0; // By default, every 10 secs
-        unsigned int maxCharSlots = barSize.x/(fontPixels*3);
-        unsigned int numTimeSlots = duration/tScale;
-        if(numTimeSlots > maxCharSlots){
-            tScale = 30.0;
-        }
-        for(float t = 0; t <= duration; t+=tScale){
-            float posX = t * barScaleSecond;
-            std::string label = ofToString(glm::floor(t/60.f)) + ":" + ofToString(glm::mod(t,60.f));
-            wdl->AddLine({barPos.x+posX, barPos.y}, {barPos.x+posX, barPos.y+barSize.y}, ImGui::GetColorU32(ImGuiCol_Text));
-            wdl->AddText({barPos.x+posX-fontPixels*1.f, barPos.y-barSize.y}, ImGui::GetColorU32(ImGuiCol_Text, .6f), label.c_str());
-        }
-
-        // Big cursor line
-        float playHeadX = getProgress() * barSize.x;
-        wdl->AddLine({barPos.x+playHeadX, barPos.y-4}, {barPos.x+playHeadX, barPos.y+barSize.y+4}, ImGui::GetColorU32(ImGuiCol_ButtonActive));
+        drawImGuiTimeline(horizontalLayout);
 
 
-        // Play Controls
-        ImGui::BeginGroup();
-
-        // Start over
-        if(ImGui::Button("<-")){
-            goToFrame(0);
-        }
-        ImGui::SameLine();
-
-        // Start/Stop
-        if(!playing){
-            if(ImGui::Button("Play")){
-                start();
-            }
-        }
-        else {
-            if(ImGui::Button("Stop")){
-                stop();
-            }
-        }
-        ImGui::SameLine();
-
-        // Pause / Resume
-        if(playing && !paused){
-            if(ImGui::Button("Pause ")){
-                pause();
-            }
-        }
-        else if(ImGui::Button("Resume")){
-            if(!playing) start();
-            else resume();
-        }
-        ImGui::SameLine();
-
-        // Prev-next controls
-        ImGui::Spacing();
-        ImGui::SameLine();
-
-        bool endDisabled = false;
-        if(!(paused || playSpeed==0)){
-            ImGui::BeginDisabled();
-            endDisabled = true;
-        }
-        ImGuiDir frameNav = ImGuiEx::ButtonPair(ImGuiDir_Left, ImGuiDir_Right);
-        if(frameNav!=ImGuiDir_None){
-            if(frameNav==ImGuiDir_Left) nextFrame(ImGui::IsKeyDown(ImGuiMod_Shift)?(-1*fps):-1);
-            else nextFrame(ImGui::IsKeyDown(ImGuiMod_Shift)?fps:1);
-        }
-        if(endDisabled) ImGui::EndDisabled();
-
-        if(horizontalLayout) ImGui::SameLine();
-
-        // Speed
-        const bool disableLossy = !bAllowLossyOperations && (playing || paused);
-        if(disableLossy) ImGui::BeginDisabled();
-        ImGui::Text(" ");
-        ImGui::SameLine();
-        ImGui::SetNextItemWidth(50);
-        static double speed = playSpeed;
-        ImGui::DragScalar("##playSpeed", ImGuiDataType_Double, &speed, 0.001f, &speedMin, &speedMax, "%6.3f" );
-        if(ImGui::IsItemDeactivatedAfterEdit()){
-            setPlaySpeed(speed);
-            speed = playSpeed;
-        }
-        else if(ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal | ImGuiHoveredFlags_ForTooltip) && !ImGui::IsItemActive() && ImGui::BeginItemTooltip()){
-            ImGui::Text("Play Speed: %.001f", playSpeed);
-            ImGui::EndTooltip();
-        }
-        if(disableLossy) ImGui::EndDisabled();
-
-
-        ImGui::SameLine();
-
-        // Loop toggle
-        if(loopMode==ofxPlayheadLoopMode::NoLoop){
-            if(ImGui::Button("x##noloop")){
-                loopMode=ofxPlayheadLoopMode::LoopOnce;
-            }
-        }
-        else if(loopMode==ofxPlayheadLoopMode::LoopOnce){
-            if(ImGui::Button("|##looponce")){
-                loopMode=ofxPlayheadLoopMode::LoopInfinite;
-            }
-        }
-        else {
-            if(ImGui::Button("o##loop")){
-                loopMode=ofxPlayheadLoopMode::NoLoop;
-            }
-        }
-        if(ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal | ImGuiHoveredFlags_ForTooltip) && !ImGui::IsItemActive() && ImGui::BeginItemTooltip()){
-            ImGui::Text("Looping: %s", loopMode==ofxPlayheadLoopMode::LoopOnce?"Once":(loopMode==ofxPlayheadLoopMode::NoLoop?"No Loop":"Loop Infinite"));
-            ImGui::EndTooltip();
-        }
-        ImGui::SameLine();
-        ImGui::Text("%03lu", counters.loopCount);
-
-        ImGui::SameLine();
-        ImGui::Spacing();
-        ImGui::SameLine();
-
-        // Playback Mode toggle
-        if(disableLossy) ImGui::BeginDisabled();
-        if(playbackMode==ofxPlayheadMode::ofxPlayheadMode_Offline){
-            if(ImGui::Button("offline##bpmo")){
-                setPlayMode(ofxPlayheadMode::ofxPlayheadMode_RealTime_Absolute);
-            }
-            else if(ImGui::IsItemClicked(ImGuiMouseButton_Right))
-                setPlayMode(ofxPlayheadMode::ofxPlayheadMode_RealTime_Relative);
-        }
-        else if(playbackMode==ofxPlayheadMode::ofxPlayheadMode_RealTime_Absolute){
-            if(ImGui::Button("r-t Abs##pbmra")){
-                setPlayMode(ofxPlayheadMode::ofxPlayheadMode_RealTime_Relative);
-            }
-            else if(ImGui::IsItemClicked(ImGuiMouseButton_Right))
-                setPlayMode(ofxPlayheadMode::ofxPlayheadMode_Offline);
-        }
-        else{
-            if(ImGui::Button("r-t Rel##pbmrr")){
-                setPlayMode(ofxPlayheadMode::ofxPlayheadMode_Offline);
-            }
-            else if(ImGui::IsItemClicked(ImGuiMouseButton_Right))
-                setPlayMode(ofxPlayheadMode::ofxPlayheadMode_RealTime_Absolute);
-        }
-        if(ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal | ImGuiHoveredFlags_ForTooltip) && !ImGui::IsItemActive() && ImGui::BeginItemTooltip()){
-            ImGui::Text("Playback Mode: %s", playbackMode==ofxPlayheadMode::ofxPlayheadMode_Offline?"Offline":(playbackMode==ofxPlayheadMode::ofxPlayheadMode_RealTime_Absolute?"Real Time (absolute)":"Real Time (relative)"));
-            ImGui::EndTooltip();
-        }
-        if(disableLossy) ImGui::EndDisabled();
-
-        ImGui::EndGroup(); // Controls
-        ImGui::EndGroup(); // time section
-    }
+    } // end clock and controls
 
     ImGui::PopID();
 }
 
-void ofxPlayhead::drawImGuiTimelineWindow(bool* p_open){
+void ofxPlayhead::drawImGuiSettings(bool horizontalLayout){
+
+    // Time signature
+    ImGui::BeginGroup();
+    ImGui::PushItemWidth(60);
+
+    ImGui::SeparatorText("TimeSig");
+    // Time Signature Info
+    ImGui::SameLine();
+//            int posX = ImGui::GetCursorPosX();
+//            ImGui::SetCursorPosX(posX-10);
+    if (ImGuiEx::BeginHelpMarker("[i]")){
+        ImGui::SeparatorText("TS Info");
+        ImGui::Text("1 beat = %.3fsec", timeSignature.getBeatDurationSecs());
+        ImGui::Text("1 bar = %.3fsec", timeSignature.getBarDurationSecs());
+        ImGui::Text("1 note = %.3fsec", timeSignature.getNoteDurationSecs());
+        ImGuiEx::EndHelpMarker();
+    }
+
+    static unsigned int bpmMin = 1, bpmMax=512;
+    if(ImGui::DragScalar("BPM", ImGuiDataType_U16, &timeSignature.bpm, 1.f, &bpmMin, &bpmMax, "%u")){
+        timeSignature.updateValues();
+    }
+    static unsigned int noteStep = 1, noteStepFast=1;
+    if(ImGui::InputScalar("Bars", ImGuiDataType_U16, &timeSignature.beatsPerBar, &noteStep, &noteStepFast, "%u")){
+        timeSignature.updateValues();
+    }
+    if(ImGui::InputScalar("Notes", ImGuiDataType_U16, &timeSignature.notesPerBeat, &noteStep, &noteStepFast, "%u")){
+        timeSignature.updateValues();
+    }
+    ImGui::PopItemWidth();
+    ImGui::EndGroup();
+
+    if(horizontalLayout) {
+        ImGui::SameLine();
+        ImGui::Dummy({8,8});
+        ImGui::SameLine();
+    }
+
+    // Playback
+    ImGui::BeginGroup();
+    if(horizontalLayout) ImGui::PushItemWidth(80);
+    ImGui::SeparatorText("Playback");
+
+    if(ImGui::InputScalar("Fps", ImGuiDataType_U16, &fps, &noteStep, &noteStepFast, "%u")){
+        //timeSignature.updateValues();
+    }
+
+    // Playback
+    static int currentPBMode=-1;
+    currentPBMode = playbackMode==ofxPlayheadMode::ofxPlayheadMode_RealTime_Absolute?0:(playbackMode==ofxPlayheadMode::ofxPlayheadMode_RealTime_Relative?1:2);
+    if(ImGui::Combo("Playback", &currentPBMode, "Real-time (absolute)\0Real-time (relative)\0Offline\0\0")){
+        setPlayMode(currentPBMode==0?ofxPlayheadMode::ofxPlayheadMode_RealTime_Absolute : (currentPBMode==1?ofxPlayheadMode::ofxPlayheadMode_RealTime_Relative : ofxPlayheadMode::ofxPlayheadMode_Offline));
+    }
+
+    // Looping
+    static int currentLoopMode=-1;
+    currentLoopMode = loopMode==ofxPlayheadLoopMode::NoLoop?0:(loopMode==ofxPlayheadLoopMode::LoopOnce?1:2);
+    if(ImGui::Combo("Loop", &currentLoopMode, "No Loop\0Loop Once\0Loop Infinite\0\0")){
+        loopMode = currentLoopMode==0?ofxPlayheadLoopMode::NoLoop:(currentLoopMode==1?ofxPlayheadLoopMode::LoopOnce:ofxPlayheadLoopMode::LoopInfinite);
+    }
+
+    // Play speed
+    double speed = playSpeed;
+    if(ImGui::DragScalar("Speed", ImGuiDataType_Double, &speed, 0.05f, &speedMin, &speedMax, "%7.3f")){
+        setPlaySpeed(speed);
+    }
+
+    if(horizontalLayout) ImGui::PopItemWidth();
+    ImGui::EndGroup();
+
+    if(horizontalLayout) ImGui::SameLine();
+
+    // Duration
+    ImGui::BeginGroup();
+    if(horizontalLayout) ImGui::PushItemWidth(80);
+    ImGui::SeparatorText("Duration");
+
+    unsigned int durationHours = glm::floor(duration/(3600));
+    unsigned int durationMinutes = glm::mod(glm::floor(duration/60), 60.);
+    unsigned int durationSeconds = glm::mod(duration, 60.);
+    static unsigned int durationMin = 0, durationHoursMax = 23, durationMinSecsMax=59;
+    bool updateDurations = false;
+    if(ImGui::DragScalar("##hours", ImGuiDataType_U16, &durationHours, 1.f, &durationMin, &durationHoursMax, "%u hours")){
+        updateDurations = true;
+    }
+    if(ImGui::DragScalar("##minutes", ImGuiDataType_U16, &durationMinutes, 1.f, &durationMin, &durationMinSecsMax, "%u mins")){
+        updateDurations = true;
+    }
+    if(ImGui::DragScalar("##seconds", ImGuiDataType_U16, &durationSeconds, 1.f, &durationMin, &durationMinSecsMax, "%u secs")){
+        updateDurations = true;
+    }
+
+    if(updateDurations){
+        duration = glm::max(durationHours*3600 + durationMinutes*60 + durationSeconds, 1u);
+    }
+    if(horizontalLayout) ImGui::PopItemWidth();
+    ImGui::EndGroup();
+
+    if(horizontalLayout) ImGui::SameLine();
+
+    // Duration info
+    ImGui::BeginGroup();
+    //if(horizontalLayout) ImGui::PushItemWidth(80);
+    ImGui::SeparatorText("Info");
+
+    ImGui::Text("Duration: %.0f sec", duration);
+    ImGui::Text("%u frames total", getTotalFrames());
+    ImGui::Text("x bars (measures)");
+    ImGui::Text("x notes");
+
+    //ImGui::Spacing();
+    //if(horizontalLayout) ImGui::PopItemWidth();
+    ImGui::EndGroup();
+
+    // More options
+    if(horizontalLayout) ImGui::SameLine();
+    ImGui::BeginGroup();
+    ImGui::SeparatorText("Advanced");
+
+    ImGui::Checkbox("Allow Lossy Operations", &bAllowLossyOperations);
+    ImGuiEx::ShowHelpMarker("Allows changing playMode and playSpeed while playing. Off is more robust.");
+
+    ImGui::EndGroup();
+
+}
+
+void ofxPlayhead::drawImGuiRamps(){
+
+//        for(unsigned int i=0; i < ofxPHTL_Ramp_Hist_Size-1; i++){
+//            beatProgressHist[i] = beatProgressHist[i+1];
+//        }
+//        beatProgressHist[ofxPHTL_Ramp_Hist_Size-1] = timeRamps.beatProgress;
+
+    // Signals & Ramps
+    ImGui::BeginGroup();
+
+    // Bar Ramps
+    static float barProgressHist[ofxPHTL_Ramp_Hist_Size] = {0};
+    ImGuiEx::RampGraph("Bar progress: %.2f", barProgressHist, timeRamps.barProgress, !paused);
+    static float barPulseHist[ofxPHTL_Ramp_Hist_Size] = {0};
+    ImGuiEx::RampGraph("Bar pulse: %.2f", barPulseHist, timeRamps.barPulse, !paused);
+    static float barStepHist[ofxPHTL_Ramp_Hist_Size] = {0};
+    ImGuiEx::RampGraph("Bar Step: %.2f", barStepHist, timeRamps.barStep, !paused);
+
+    ImGui::Separator();
+
+    // Beat Ramps
+    static float beatProgressHist[ofxPHTL_Ramp_Hist_Size] = {0};
+    ImGuiEx::RampGraph("Beat Progress: %.2f", beatProgressHist, timeRamps.beatProgress, !paused);
+    static float beatPulseHist[ofxPHTL_Ramp_Hist_Size] = {0};
+    ImGuiEx::RampGraph("Beat Pulse: %.2f", beatPulseHist, timeRamps.beatPulse, !paused);
+    static float beatStepHist[ofxPHTL_Ramp_Hist_Size] = {0};
+    ImGuiEx::RampGraph("Beat Step: %.2f", beatStepHist, timeRamps.beatStep, !paused);
+
+    ImGui::Separator();
+
+    // Note Ramps
+    static float noteProgressHist[ofxPHTL_Ramp_Hist_Size] = {0};
+    ImGuiEx::RampGraph("Note Progress: %.2f", noteProgressHist, timeRamps.noteProgress, !paused);
+    static float notePulseHist[ofxPHTL_Ramp_Hist_Size] = {0};
+    ImGuiEx::RampGraph("Note Pulse: %.2f", notePulseHist, timeRamps.notePulse, !paused);
+    static float noteStepHist[ofxPHTL_Ramp_Hist_Size] = {0};
+    ImGuiEx::RampGraph("Note Step: %.2f", noteStepHist, timeRamps.noteStep, !paused);
+
+    ImGui::EndGroup(); // End Ramps group
+}
+
+void ofxPlayhead::drawImGuiMetronom(bool horizontalLayout){
+    // TimeSig
+    ImGui::BeginGroup();
+    ImGui::PushItemWidth(100);
+    //ImGui::BeginGroup();
+    //ImGui::SeparatorText("TimeSig");
+
+    ImGui::BeginDisabled();
+    //ImGui::Dummy({100,20});
+    ImGui::BeginGroup();
+    ImGui::Text("Bar");
+    ImGui::VSliderFloat("##barprogress", ImVec2(14, 50), &timeRamps.barProgress, 0.0f, 1.0f, "");
+    ImGui::SameLine();
+    ImGui::VSliderFloat("##barstep", ImVec2(6, 50), &timeRamps.barStep, 0.0f, 1.0f, "");
+    ImGui::Text("%04lu", counters.barCount%10000);
+    ImGui::EndGroup();
+    ImGui::SameLine();
+    ImGui::BeginGroup();
+    ImGui::Text("Beat");
+    ImGui::VSliderFloat("##beatprogress", ImVec2(14, 50), &timeRamps.beatProgress, 0.0f, 1.0f, "");
+    ImGui::SameLine();
+    ImGui::VSliderFloat("##beatstep", ImVec2(6, 50), &timeRamps.beatStep, 0.0f, 1.0f, "");
+    ImGui::Text("%04lu", counters.beatCount%10000);
+    ImGui::EndGroup();
+    ImGui::SameLine();
+    ImGui::BeginGroup();
+    ImGui::Text("Note");
+    ImGui::VSliderFloat("##noteprogress", ImVec2(14, 50), &timeRamps.noteProgress, 0.0f, 1.0f, "");
+    ImGui::SameLine();
+    ImGui::VSliderFloat("##notestep", ImVec2(6, 50), &timeRamps.noteStep, 0.0f, 1.0f, "");
+    ImGui::Text("%04lu", counters.noteCount%10000);
+    ImGui::EndGroup();
+
+    ImGui::EndDisabled();
+    //ImGui::EndGroup();
+    ImGui::PopItemWidth();
+    ImGui::EndGroup();
+}
+
+void ofxPlayhead::drawImGuiTimers(bool horizontalLayout){
+    // Timers
+    ImGui::BeginGroup();
+
+    ImGui::BeginDisabled();
+
+    if(horizontalLayout){
+        ImGui::Dummy({30,5});
+        ImGui::SameLine();
+    }
+    ImGui::Text("Time");
+    ImGui::EndDisabled();
+
+    static bool bShowSecsWithMins = false;
+    double elapsed = getElapsedSeconds();
+    if(bShowSecsWithMins){
+        //unsigned int durationHours = glm::floor(elapsed/(3600));
+        unsigned int durationMinutes = glm::floor(glm::mod(glm::floor(elapsed/60), 60.));
+        unsigned int durationSeconds = glm::floor(glm::mod(elapsed, 60.));
+        unsigned int durationMs = glm::round(glm::mod(elapsed, 1.)*1000);
+        ImGui::Text(" %02u:%02u:%03u s", durationMinutes, durationSeconds, durationMs);
+    }
+    else ImGui::Text("%10.4f s", elapsed);
+    // Toggle display style on click
+    if(ImGui::IsItemClicked()){
+        bShowSecsWithMins = !bShowSecsWithMins;
+    }
+    // Show delta time on hover
+    else if(ImGui::IsItemHovered(ImGuiHoveredFlags_Stationary)){
+        if(ImGui::BeginTooltip()){
+            ImGui::Text("Delta time: %.5f sec", counters.tDelta);
+            ImGui::Text("Seek delta: %.5f sec", counters.tDeltaSeek);
+        }
+        ImGui::EndTooltip();
+    }
+    ImGui::Text("%10u f", getFrameNum());
+    ImGui::Text("%04lu.%02lu.%02lu tc", counters.barCount, counters.beatCount%timeSignature.beatsPerBar, counters.noteCount%timeSignature.notesPerBeat);
+    ImGui::Text("%10.6f %%", getProgress()*100);
+    //if(counters.loopCount>0) ImGui::Text("Loops   : %10lu", counters.loopCount);
+
+    //
+
+    ImGui::EndGroup(); // Timers
+}
+
+void ofxPlayhead::drawImGuiPlayHead(bool horizontalLayout){
+    ImGui::BeginGroup();
+    //ImGui::SeparatorText("Time");
+    static double pHeadMin=0.;
+    ImVec2 barSize = {ImGui::GetContentRegionAvail().x, ImGui::GetFrameHeight()-2};
+    ImGui::Dummy({barSize.x, 8});
+    ImVec2 barPos = ImGui::GetCursorScreenPos();
+    double barScaleSecond = barSize.x / duration;
+    barPos.y+=1;
+    ImGui::SetNextItemWidth(barSize.x);
+    double phCopy = counters.playhead;
+    if(ImGui::SliderScalar("##Playhead",ImGuiDataType_Double, &phCopy, &pHeadMin, &duration, "" )){
+        goToSeconds(phCopy, false, false);
+    }
+
+    ImDrawList* wdl = ImGui::GetWindowDrawList();
+    //wdl->AddRect(barPos, barPos+barSize, IM_COL32(255,255,255,255));
+
+    // Draw Bars
+    unsigned int numBars = glm::floor(duration / timeSignature.getBarDurationSecs());
+    for(unsigned int bi=0; bi < numBars; bi++){
+        float posX = bi * timeSignature.getBarDurationSecs() * barScaleSecond;
+        wdl->AddLine({barPos.x+posX, barPos.y}, {barPos.x+posX, barPos.y+barSize.y}, ImGui::GetColorU32(ImGuiCol_TextDisabled));
+    }
+
+    // Draw Beats
+    unsigned int numBeats = glm::floor(duration / timeSignature.getBeatDurationSecs());
+    for(unsigned int bi=0; bi < numBeats; bi++){
+        float posX = bi * timeSignature.getBeatDurationSecs() * barScaleSecond;
+        wdl->AddLine({barPos.x+posX, barPos.y}, {barPos.x+posX, barPos.y+barSize.y}, ImGui::GetColorU32(ImGuiCol_TextDisabled, .2f));
+    }
+
+    // Draw seconds
+    int fontPixels = ImGui::GetFontSize();
+    double tScale = 10.0; // By default, every 10 secs
+    unsigned int maxCharSlots = barSize.x/(fontPixels*3);
+    unsigned int numTimeSlots = duration/tScale;
+    if(numTimeSlots > maxCharSlots){
+        tScale = 30.0;
+    }
+    for(float t = 0; t <= duration; t+=tScale){
+        float posX = t * barScaleSecond;
+        std::string label = ofToString(glm::floor(t/60.f)) + ":" + ofToString(glm::mod(t,60.f));
+        wdl->AddLine({barPos.x+posX, barPos.y}, {barPos.x+posX, barPos.y+barSize.y}, ImGui::GetColorU32(ImGuiCol_Text));
+        wdl->AddText({barPos.x+posX-fontPixels*1.f, barPos.y-barSize.y}, ImGui::GetColorU32(ImGuiCol_Text, .6f), label.c_str());
+    }
+
+    // Big cursor line
+    float playHeadX = getProgress() * barSize.x;
+    wdl->AddLine({barPos.x+playHeadX, barPos.y-4}, {barPos.x+playHeadX, barPos.y+barSize.y+4}, ImGui::GetColorU32(ImGuiCol_ButtonActive));
+    ImGui::EndGroup(); // PlayheadSlider
+}
+
+void ofxPlayhead::drawImGuiTimeline(bool horizontalLayout){
+    // Timeline
+    ImGui::BeginGroup();
+
+    // PlayheadSlider
+    drawImGuiPlayHead(horizontalLayout);
+
+    // Play Controls
+    drawImGuiPlayControls(horizontalLayout);
+
+    ImGui::EndGroup(); // timeline section
+}
+
+void ofxPlayhead::drawImGuiPlayControls(bool horizontalLayout){
+    ImGui::BeginGroup();
+
+    // Start over
+    if(ImGui::Button("<-")){
+        goToFrame(0);
+    }
+    ImGui::SameLine();
+
+    // Start/Stop
+    if(!playing){
+        if(ImGui::Button("Play")){
+            start();
+        }
+    }
+    else {
+        if(ImGui::Button("Stop")){
+            stop();
+        }
+    }
+    ImGui::SameLine();
+
+    // Pause / Resume
+    if(playing && !paused){
+        if(ImGui::Button("Pause ")){
+            pause();
+        }
+    }
+    else if(ImGui::Button("Resume")){
+        if(!playing) start();
+        else resume();
+    }
+
+    if(horizontalLayout){
+        ImGui::SameLine();
+        ImGui::Spacing();
+        ImGui::SameLine();
+    }
+
+    // Prev-next controls
+    bool endDisabled = false;
+    if(!(paused || playSpeed==0)){
+        ImGui::BeginDisabled();
+        endDisabled = true;
+    }
+    ImGuiDir frameNav = ImGuiEx::ButtonPair(ImGuiDir_Left, ImGuiDir_Right);
+    if(frameNav!=ImGuiDir_None){
+        if(frameNav==ImGuiDir_Left) nextFrame(ImGui::IsKeyDown(ImGuiMod_Shift)?(-1*fps):-1);
+        else nextFrame(ImGui::IsKeyDown(ImGuiMod_Shift)?fps:1);
+    }
+    if(endDisabled) ImGui::EndDisabled();
+
+    if(horizontalLayout) ImGui::SameLine();
+
+    // Speed
+    const bool disableLossy = !bAllowLossyOperations && (playing || paused);
+    if(disableLossy) ImGui::BeginDisabled();
+    ImGui::Text(" ");
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(50);
+    static double speed = playSpeed;
+    ImGui::DragScalar("##playSpeed", ImGuiDataType_Double, &speed, 0.001f, &speedMin, &speedMax, "%6.3f" );
+    if(ImGui::IsItemDeactivatedAfterEdit()){
+        setPlaySpeed(speed);
+        speed = playSpeed;
+    }
+    else if(ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal | ImGuiHoveredFlags_ForTooltip) && !ImGui::IsItemActive() && ImGui::BeginItemTooltip()){
+        ImGui::Text("Play Speed: %.001f", playSpeed);
+        ImGui::EndTooltip();
+    }
+    if(disableLossy) ImGui::EndDisabled();
+
+
+    ImGui::SameLine();
+
+    // Loop toggle
+    if(loopMode==ofxPlayheadLoopMode::NoLoop){
+        if(ImGui::Button("x##noloop")){
+            loopMode=ofxPlayheadLoopMode::LoopOnce;
+        }
+    }
+    else if(loopMode==ofxPlayheadLoopMode::LoopOnce){
+        if(ImGui::Button("|##looponce")){
+            loopMode=ofxPlayheadLoopMode::LoopInfinite;
+        }
+    }
+    else {
+        if(ImGui::Button("o##loop")){
+            loopMode=ofxPlayheadLoopMode::NoLoop;
+        }
+    }
+    if(ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal | ImGuiHoveredFlags_ForTooltip) && !ImGui::IsItemActive() && ImGui::BeginItemTooltip()){
+        ImGui::Text("Looping: %s", loopMode==ofxPlayheadLoopMode::LoopOnce?"Once":(loopMode==ofxPlayheadLoopMode::NoLoop?"No Loop":"Loop Infinite"));
+        ImGui::EndTooltip();
+    }
+    ImGui::SameLine();
+    ImGui::Text("%03lu", counters.loopCount);
+
+    ImGui::SameLine();
+    ImGui::Spacing();
+    ImGui::SameLine();
+
+    // Playback Mode toggle
+    if(disableLossy) ImGui::BeginDisabled();
+    if(playbackMode==ofxPlayheadMode::ofxPlayheadMode_Offline){
+        if(ImGui::Button("offline##bpmo")){
+            setPlayMode(ofxPlayheadMode::ofxPlayheadMode_RealTime_Absolute);
+        }
+        else if(ImGui::IsItemClicked(ImGuiMouseButton_Right))
+            setPlayMode(ofxPlayheadMode::ofxPlayheadMode_RealTime_Relative);
+    }
+    else if(playbackMode==ofxPlayheadMode::ofxPlayheadMode_RealTime_Absolute){
+        if(ImGui::Button("r-t Abs##pbmra")){
+            setPlayMode(ofxPlayheadMode::ofxPlayheadMode_RealTime_Relative);
+        }
+        else if(ImGui::IsItemClicked(ImGuiMouseButton_Right))
+            setPlayMode(ofxPlayheadMode::ofxPlayheadMode_Offline);
+    }
+    else{
+        if(ImGui::Button("r-t Rel##pbmrr")){
+            setPlayMode(ofxPlayheadMode::ofxPlayheadMode_Offline);
+        }
+        else if(ImGui::IsItemClicked(ImGuiMouseButton_Right))
+            setPlayMode(ofxPlayheadMode::ofxPlayheadMode_RealTime_Absolute);
+    }
+    if(ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal | ImGuiHoveredFlags_ForTooltip) && !ImGui::IsItemActive() && ImGui::BeginItemTooltip()){
+        ImGui::Text("Playback Mode: %s", playbackMode==ofxPlayheadMode::ofxPlayheadMode_Offline?"Offline":(playbackMode==ofxPlayheadMode::ofxPlayheadMode_RealTime_Absolute?"Real Time (absolute)":"Real Time (relative)"));
+        ImGui::EndTooltip();
+    }
+    if(disableLossy) ImGui::EndDisabled();
+
+    ImGui::EndGroup(); // Controls
+}
+
+void ofxPlayhead::drawImGuiWindow(bool* p_open){
     if(ImGui::Begin("Timeline", p_open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar)){
-        drawImGuiPlayControls();
+        drawImGuiFullWidget();
     }
 
     ImGui::End();

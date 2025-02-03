@@ -122,11 +122,12 @@ void ofApp::draw(){
     }
 
     // Playhead control window
-    playhead.drawImGuiTimelineWindow();
+    playhead.drawImGuiWindow();
 
     // Simulation window
     if(ImGui::Begin("Simulation")){
         ImGui::TextWrapped("In this example, the upper circle is an absolute animation while the lower circle is animated by a simulation using tDelta.");
+        ImGui::Spacing();
         ImGui::Separator();
         ImGui::Text("Simulation offset = %.3f", posSim.x - (ws.x*playhead.getProgress()));
         if(ImGui::Button("Sync simulation")){
@@ -134,7 +135,12 @@ void ofApp::draw(){
         }
         ImGui::Checkbox("Use seek delta too", &bUseSeekDelta);
 
-        //playhead.drawImGuiPlayControls();
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        ImGui::TextDisabled("Here's some control buttons");
+        playhead.drawImGuiPlayControls();
     }
     ImGui::End();
 

@@ -286,8 +286,16 @@ public:
 
     // ImGui Helpers
 #ifdef ofxAddons_ENABLE_IMGUI
+    void drawImGuiFullWidget(bool horizontalLayout = true);
+    void drawImGuiSettings(bool horizontalLayout = true);
+    void drawImGuiRamps();
+    void drawImGuiMetronom(bool horizontalLayout = true);
+    void drawImGuiTimers(bool horizontalLayout = true);
+    void drawImGuiTimeline(bool horizontalLayout = true);
+    void drawImGuiPlayHead(bool horizontalLayout = true);
     void drawImGuiPlayControls(bool horizontalLayout = true);
-    void drawImGuiTimelineWindow(bool* p_open = nullptr);
+    void drawImGuiWindow(bool* p_open = nullptr);
+    static const double speedMin, speedMax;
 #endif
 
 #if ofxPH_XML_ENGINE == ofxPH_XML_ENGINE_PUGIXML
