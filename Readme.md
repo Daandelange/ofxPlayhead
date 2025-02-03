@@ -2,7 +2,7 @@
 
 **ofxPlayhead is `ofGetElapsedTime()` on steroids.**
 
-[!ofxPlayhead](./ofxPlayhead_screenshot.png)
+![ofxPlayhead](./ofxPlayhead_screenshot.png)
 
 ## Description
 
