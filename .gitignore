@@ -23,6 +23,7 @@ example*/bin/data/*
 
 # Project files
 example*/*
+!example*/*.qbs
 !example*/src/
 !example*/addons.make
 
