@@ -14,8 +14,8 @@ I have used this utility both for exporting frame-by-frame animations (with a re
 
 ## Features:
 
-- Time is calculated+cached once per frame.
-- Determined or infinite composition duration (loopable).
+- Caching: All time data is calculated+cached once per frame.
+- Duration: Determined or infinite composition duration (loopable).
 - Clock : provides time references for your animations.
 - Metronom : counters and utilities.
 - Playback modes : Real-time (time-based) or Offline (frame-based).
@@ -44,3 +44,4 @@ Example-imgui uses ofxImGui by default, but you can disable it by removing `ofxA
 
 - In rt mode: Ability to choose/align with either the theorhetical exact frame time or the real-time moment on the closest frame.
 - Ableton Link integration for synching the playhead with other apps ?
+- Clarify settings and provide more options (frame skipping, frame rounding/snapping, etc.)
