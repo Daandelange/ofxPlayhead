@@ -94,63 +94,6 @@ void ofxPHTimeRamps::updateRamps(double elapsedSeconds, const ofxPHTimeSignature
 }
 
 // - - - - - - - - - -
-#ifdef ofxAddons_ENABLE_IMGUI
-namespace ImGuiEx{
-    void PlotRampHistory( float (&historyEntry)[ofxPHTL_Ramp_Hist_Size], const float& newValue, const ImVec2& graphPos, const ImVec2& graphSize, bool bUpdateHist){
-        float graphStep = graphSize.x / ofxPHTL_Ramp_Hist_Size;
-
-        // Sync :
-        if(bUpdateHist){
-            for(unsigned int i=0; i < ofxPHTL_Ramp_Hist_Size-1; i++){
-                historyEntry[i] = historyEntry[i+1];
-            }
-            historyEntry[ofxPHTL_Ramp_Hist_Size-1] = newValue;
-        }
-
-        // Draw
-        ImVec2 prevPos;
-        ImDrawList* wdl = ImGui::GetWindowDrawList();
-        ImColor graphCol = ImGui::GetColorU32(ImGuiCol_Text);
-        for(unsigned int gi=0; gi<ofxPHTL_Ramp_Hist_Size; gi++){
-            ImVec2 newPos = graphPos+ImVec2(gi*graphStep, graphSize.y - (historyEntry[gi]*graphSize.y));
-            //wdl->AddCircleFilled(newPos, 3, IM_COL32(255,0,0,255));
-            if(gi > 0) wdl->AddLine(prevPos, newPos, graphCol);
-
-            prevPos = newPos;
-        }
-    }
-
-    void RampGraph(const char* name, float (&historyEntry)[ofxPHTL_Ramp_Hist_Size], const float& newValue, bool bUpdateHist){
-        ImColor graphColBorder = ImGui::GetColorU32(ImGuiCol_TextDisabled);
-        float graphPosX = 200; // Space for text
-
-        ImVec2 graphSize = ImGui::GetContentRegionAvail();
-        graphSize.x -= graphPosX;
-        graphSize.y = ImGui::GetFrameHeight()*2.f;
-
-        //wdl->AddRect(graphPos, graphPos+graphSize, IM_COL32(255,0,0,255));
-
-        ImVec2 graphPos = ImGui::GetCursorScreenPos();
-        graphPos.x += graphPosX;
-        ImGui::Text(name, newValue);
-        ImGui::SameLine();
-        ImGui::Dummy(graphSize);
-
-        static bool bPauseRamps = false;
-        if(ImGui::IsItemClicked(ImGuiMouseButton_Left)){
-            bPauseRamps = !bPauseRamps;
-        }
-
-        // Border
-        ImGui::GetWindowDrawList()->AddRect(graphPos, graphPos+graphSize, graphColBorder);
-
-        //  plot...
-        PlotRampHistory(historyEntry, newValue, graphPos, graphSize, bUpdateHist && !bPauseRamps);
-    }
-}
-#endif
-
-// - - - - - - - - - -
 
 ofxPlayhead::ofxPlayhead(unsigned int _fps, double _duration, ofxPlayheadLoopMode _loopMode, unsigned int _beatsPerBar, unsigned int _notesPerBeat, int _beatsPerMinute)
     : fps(_fps),
@@ -932,12 +875,12 @@ void ofxPlayhead::drawImGuiSettings(bool horizontalLayout){
     ImGui::SameLine();
 //            int posX = ImGui::GetCursorPosX();
 //            ImGui::SetCursorPosX(posX-10);
-    if (ImGuiEx::BeginHelpMarker("[i]")){
+    if (ImGuiEx::ofxPH::BeginHelpMarker("[i]")){
         ImGui::SeparatorText("TS Info");
         ImGui::Text("1 beat = %.3fsec", timeSignature.getBeatDurationSecs());
         ImGui::Text("1 bar = %.3fsec", timeSignature.getBarDurationSecs());
         ImGui::Text("1 note = %.3fsec", timeSignature.getNoteDurationSecs());
-        ImGuiEx::EndHelpMarker();
+        ImGuiEx::ofxPH::EndHelpMarker();
     }
 
     static unsigned int bpmMin = 1, bpmMax=512;
@@ -1042,7 +985,7 @@ void ofxPlayhead::drawImGuiSettings(bool horizontalLayout){
     ImGui::SeparatorText("Advanced");
 
     ImGui::Checkbox("Allow Lossy Operations", &bAllowLossyOperations);
-    ImGuiEx::ShowHelpMarker("Allows changing playMode and playSpeed while playing. Off is more robust.");
+    ImGuiEx::ofxPH::ShowHelpMarker("Allows changing playMode and playSpeed while playing. Off is more robust.");
 
     ImGui::EndGroup();
 
@@ -1060,31 +1003,31 @@ void ofxPlayhead::drawImGuiRamps(){
 
     // Bar Ramps
     static float barProgressHist[ofxPHTL_Ramp_Hist_Size] = {0};
-    ImGuiEx::RampGraph("Bar progress: %.2f", barProgressHist, timeRamps.barProgress, !paused);
+    ImGuiEx::ofxPH::RampGraph("Bar progress: %.2f", barProgressHist, timeRamps.barProgress, !paused);
     static float barPulseHist[ofxPHTL_Ramp_Hist_Size] = {0};
-    ImGuiEx::RampGraph("Bar pulse: %.2f", barPulseHist, timeRamps.barPulse, !paused);
+    ImGuiEx::ofxPH::RampGraph("Bar pulse: %.2f", barPulseHist, timeRamps.barPulse, !paused);
     static float barStepHist[ofxPHTL_Ramp_Hist_Size] = {0};
-    ImGuiEx::RampGraph("Bar Step: %.2f", barStepHist, timeRamps.barStep, !paused);
+    ImGuiEx::ofxPH::RampGraph("Bar Step: %.2f", barStepHist, timeRamps.barStep, !paused);
 
     ImGui::Separator();
 
     // Beat Ramps
     static float beatProgressHist[ofxPHTL_Ramp_Hist_Size] = {0};
-    ImGuiEx::RampGraph("Beat Progress: %.2f", beatProgressHist, timeRamps.beatProgress, !paused);
+    ImGuiEx::ofxPH::RampGraph("Beat Progress: %.2f", beatProgressHist, timeRamps.beatProgress, !paused);
     static float beatPulseHist[ofxPHTL_Ramp_Hist_Size] = {0};
-    ImGuiEx::RampGraph("Beat Pulse: %.2f", beatPulseHist, timeRamps.beatPulse, !paused);
+    ImGuiEx::ofxPH::RampGraph("Beat Pulse: %.2f", beatPulseHist, timeRamps.beatPulse, !paused);
     static float beatStepHist[ofxPHTL_Ramp_Hist_Size] = {0};
-    ImGuiEx::RampGraph("Beat Step: %.2f", beatStepHist, timeRamps.beatStep, !paused);
+    ImGuiEx::ofxPH::RampGraph("Beat Step: %.2f", beatStepHist, timeRamps.beatStep, !paused);
 
     ImGui::Separator();
 
     // Note Ramps
     static float noteProgressHist[ofxPHTL_Ramp_Hist_Size] = {0};
-    ImGuiEx::RampGraph("Note Progress: %.2f", noteProgressHist, timeRamps.noteProgress, !paused);
+    ImGuiEx::ofxPH::RampGraph("Note Progress: %.2f", noteProgressHist, timeRamps.noteProgress, !paused);
     static float notePulseHist[ofxPHTL_Ramp_Hist_Size] = {0};
-    ImGuiEx::RampGraph("Note Pulse: %.2f", notePulseHist, timeRamps.notePulse, !paused);
+    ImGuiEx::ofxPH::RampGraph("Note Pulse: %.2f", notePulseHist, timeRamps.notePulse, !paused);
     static float noteStepHist[ofxPHTL_Ramp_Hist_Size] = {0};
-    ImGuiEx::RampGraph("Note Step: %.2f", noteStepHist, timeRamps.noteStep, !paused);
+    ImGuiEx::ofxPH::RampGraph("Note Step: %.2f", noteStepHist, timeRamps.noteStep, !paused);
 
     ImGui::EndGroup(); // End Ramps group
 }
@@ -1284,7 +1227,7 @@ void ofxPlayhead::drawImGuiPlayControls(bool horizontalLayout){
         ImGui::BeginDisabled();
         endDisabled = true;
     }
-    ImGuiDir frameNav = ImGuiEx::ButtonPair(ImGuiDir_Left, ImGuiDir_Right);
+    ImGuiDir frameNav = ImGuiEx::ofxPH::ButtonPair(ImGuiDir_Left, ImGuiDir_Right);
     if(frameNav!=ImGuiDir_None){
         if(frameNav==ImGuiDir_Left) nextFrame(ImGui::IsKeyDown(ImGuiMod_Shift)?(-1*fps):-1);
         else nextFrame(ImGui::IsKeyDown(ImGuiMod_Shift)?fps:1);

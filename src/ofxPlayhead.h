@@ -32,6 +32,8 @@
 // - https://github.com/cas2void/ofxDawMetro : A pure DAW metro, no timeline.
 // - https://github.com/sevagh/libmetro : A C++ metronome class, to be used within this class ? (facilitates the maths + exactness ?)
 // - https://github.com/bakercp/ofxPlayer/ : A player for varius media.
+// - https://github.com/DolbyLaboratories/tcutils : Time <--> Frame conversion utils.
+// - https://gitlab.artificiel.org/ofxaddons/ofxvisualmemory : Playhead paradigms ?
 
 // Todo: rt-Abs mode changes start_time to move the time cursor manually, it could use paused_time instead not to change the start_time.
 // Todo: Some `counters.frameCount++;` are probably missing at some places
@@ -95,7 +97,7 @@ struct ofxPHTimeCounters {
     double tDelta; // Elapsed seconds since last frame. Experimental
     double tDeltaSeek; // Elapsed seconds while seeking. Experimental
     double progress;
-    const double& elapsedSeconds(){ return playhead; } // Alias
+    const double& elapsedSeconds() const { return playhead; } // Alias
 
     private:
     int frameNumSpeed; // Used to track offline frames with the speed parameter
@@ -139,35 +141,13 @@ protected:
 };
 
 // - - - - - - - - - -
-#ifdef ofxAddons_ENABLE_IMGUI
-#define ofxPHTL_Ramp_Hist_Size 120
-namespace ImGuiEx{
-    void PlotRampHistory( float (&historyEntry)[ofxPHTL_Ramp_Hist_Size], const float& newValue, const ImVec2& graphPos, const ImVec2& graphSize, bool bUpdateHist=true);
-    void RampGraph(const char* name, float (&historyEntry)[ofxPHTL_Ramp_Hist_Size], const float& newValue, bool bUpdateHist=true);
-}
-#endif
-
-// - - - - - - - - - -
 
 // A clock class with playhead functionality and some accessory ramps
 // That makes up a timeline
 class ofxPlayhead {
-#ifdef ofxPH_TIMELINE_SINGLETON
-    private:
-#else
     public:
-#endif
         ofxPlayhead(unsigned int _fps=60, double _duration = 60, ofxPlayheadLoopMode _loopMode = ofxPlayheadLoopMode::NoLoop, unsigned int _beatsPerBar = 4, unsigned int _notesPerBeat = 4, int _beatsPerMinute = 120);
 
-#ifdef ofxPH_TIMELINE_SINGLETON
-    public:
-        //ofxPlayhead(const ofxPlayhead&) = delete; // not assignable
-        ofxPlayhead(ofxPlayhead&&) = delete; // not moveable
-        static ofxPlayhead& getTimeline(){
-            static ofxPlayhead tl;
-            return tl;
-        }
-#endif
     public:
         // Copy assignment. Use with caution! Can conflict with singleton usage creating a copy.
         ofxPlayhead(const ofxPlayhead& _other) :
@@ -348,90 +328,16 @@ private:
     void reset();
 };
 
-//int main() {
-//    Timeline timeline(24, 10.0, LoopMode::LoopInfinite, 4, 120);  // Set your desired parameters
 
-//    timeline.setPlaySpeed(0.5);  // Set the play speed (0.5 for half speed, 2.0 for double speed, etc.)
+// Helper for using the class as singleton
+class ofxPlayheadSingleton {
+    private:
+        ofxPlayheadSingleton();
 
-//    timeline.start();
-
-//    // Let the timeline play for a while
-//    for (int i = 0; i < 120; ++i) {
-//        timeline.tick();
-//        std::cout << "Elapsed Time: " << timeline.getElapsedSeconds()
-//                  << " seconds, Current Frame: " << timeline.getCurrentFrame()
-//                  << ", Current Beat: " << timeline.getCurrentBeat() << std::endl;
-
-//        // Simulate rendering or processing work
-//        // std::this_thread::sleep_for(std::chrono::milliseconds(50));
-//    }
-
-//    // Pause the timeline
-//    timeline.pause();
-
-//    // Resume after a while
-//    for (int i = 0; i < 60; ++i) {
-//        timeline.tick();
-//        std::cout << "Elapsed Time: " << timeline.getElapsedSeconds()
-//                  << " seconds, Current Frame: " << timeline.getCurrentFrame()
-//                  << ", Current Beat: " << timeline.getCurrentBeat() << std::endl;
-//    }
-
-//    // Resume and let it play to completion
-//    timeline.start();
-//    while (timeline.isPlaying()) {
-//        timeline.tick();
-//        std::cout << "Elapsed Time: " << timeline.getElapsedSeconds()
-//                  << " seconds, Current Frame: " << timeline.getCurrentFrame()
-//                  << ", Current Beat: " << timeline.getCurrentBeat() << std::endl;
-
-//        // Simulate rendering or processing work
-//        // std::this_thread::sleep_for(std::chrono::milliseconds(50));
-//    }
-
-//    return 0;
-//}
-
-
-//int main() {
-//    Timeline timeline(24, 10.0, true, 4, 120);  // Set your desired parameters
-
-//    timeline.start();
-
-//    // Let the timeline play for a while
-//    for (int i = 0; i < 120; ++i) {
-//        timeline.tick();
-//        std::cout << "Elapsed Time: " << timeline.getElapsedSeconds()
-//                  << " seconds, Current Frame: " << timeline.getCurrentFrame()
-//                  << ", Current Beat: " << timeline.getCurrentBeat() << std::endl;
-
-//        // Simulate rendering or processing work
-//        // std::this_thread::sleep_for(std::chrono::milliseconds(50));
-//    }
-
-//    // Pause the timeline
-//    timeline.pause();
-
-//    // Resume after a while
-//    for (int i = 0; i < 60; ++i) {
-//        timeline.tick();
-//        std::cout << "Elapsed Time: " << timeline.getElapsedSeconds()
-//                  << " seconds, Current Frame: " << timeline.getCurrentFrame()
-//                  << ", Current Beat: " << timeline.getCurrentBeat() << std::endl;
-//    }
-
-//    // Resume and let it play to completion
-//    timeline.start();
-//    while (timeline.isPlaying()) {
-//        timeline.tick();
-//        std::cout << "Elapsed Time: " << timeline.getElapsedSeconds()
-//                  << " seconds, Current Frame: " << timeline.getCurrentFrame()
-//                  << ", Current Beat: " << timeline.getCurrentBeat() << std::endl;
-
-//        // Simulate rendering or processing work
-//        // std::this_thread::sleep_for(std::chrono::milliseconds(50));
-//    }
-
-//    return 0;
-//}
-
+    public:
+        ofxPlayheadSingleton(ofxPlayheadSingleton&&) = delete; // not moveable
+        static ofxPlayhead& get(){
+            static ofxPlayhead ph;
+            return ph;
+        }
+};

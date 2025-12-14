@@ -5,6 +5,7 @@
 
 // ImGui namespace extensions
 namespace ImGuiEx {
+namespace ofxPH {
     // Help marker - From imgui_demo.cpp
     bool BeginHelpMarker(const char* marker = "[?]"){
         ImGui::SameLine();
@@ -56,5 +57,58 @@ namespace ImGuiEx {
         ImGui::PopStyleVar();
         return result;
     }
+
+    void PlotRampHistory( float (&historyEntry)[ofxPHTL_Ramp_Hist_Size], const float& newValue, const ImVec2& graphPos, const ImVec2& graphSize, bool bUpdateHist){
+        float graphStep = graphSize.x / ofxPHTL_Ramp_Hist_Size;
+
+        // Sync :
+        if(bUpdateHist){
+            for(unsigned int i=0; i < ofxPHTL_Ramp_Hist_Size-1; i++){
+                historyEntry[i] = historyEntry[i+1];
+            }
+            historyEntry[ofxPHTL_Ramp_Hist_Size-1] = newValue;
+        }
+
+        // Draw
+        ImVec2 prevPos;
+        ImDrawList* wdl = ImGui::GetWindowDrawList();
+        ImColor graphCol = ImGui::GetColorU32(ImGuiCol_Text);
+        for(unsigned int gi=0; gi<ofxPHTL_Ramp_Hist_Size; gi++){
+            ImVec2 newPos = graphPos+ImVec2(gi*graphStep, graphSize.y - (historyEntry[gi]*graphSize.y));
+            //wdl->AddCircleFilled(newPos, 3, IM_COL32(255,0,0,255));
+            if(gi > 0) wdl->AddLine(prevPos, newPos, graphCol);
+
+            prevPos = newPos;
+        }
+    }
+
+    void RampGraph(const char* name, float (&historyEntry)[ofxPHTL_Ramp_Hist_Size], const float& newValue, bool bUpdateHist){
+        ImColor graphColBorder = ImGui::GetColorU32(ImGuiCol_TextDisabled);
+        float graphPosX = 200; // Space for text
+
+        ImVec2 graphSize = ImGui::GetContentRegionAvail();
+        graphSize.x -= graphPosX;
+        graphSize.y = ImGui::GetFrameHeight()*2.f;
+
+        //wdl->AddRect(graphPos, graphPos+graphSize, IM_COL32(255,0,0,255));
+
+        ImVec2 graphPos = ImGui::GetCursorScreenPos();
+        graphPos.x += graphPosX;
+        ImGui::Text(name, newValue);
+        ImGui::SameLine();
+        ImGui::Dummy(graphSize);
+
+        static bool bPauseRamps = false;
+        if(ImGui::IsItemClicked(ImGuiMouseButton_Left)){
+            bPauseRamps = !bPauseRamps;
+        }
+
+        // Border
+        ImGui::GetWindowDrawList()->AddRect(graphPos, graphPos+graphSize, graphColBorder);
+
+        //  plot...
+        PlotRampHistory(historyEntry, newValue, graphPos, graphSize, bUpdateHist && !bPauseRamps);
+    }
+}
 }
 #endif
