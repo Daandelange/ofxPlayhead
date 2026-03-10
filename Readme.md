@@ -45,3 +45,7 @@ Example-imgui uses ofxImGui by default, but you can disable it by removing `ofxA
 - In rt mode: Ability to choose/align with either the theorhetical exact frame time or the real-time moment on the closest frame.
 - Ableton Link integration for synching the playhead with other apps ?
 - Clarify settings and provide more options (frame skipping, frame rounding/snapping, etc.)
+
+## Similar / Alternatives
+
+- [ofxTimeline](https://github.com/mazbox/ofxmarek/tree/master/ofxTimeline)

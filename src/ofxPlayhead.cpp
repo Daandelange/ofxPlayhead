@@ -5,6 +5,7 @@
 #endif
 
 #include "ofUtils.h" // ofToString
+#include "ofAppRunner.h" // ofEvents
 
 #ifdef ofxAddons_ENABLE_IMGUI
 const double ofxPlayhead::speedMin = -10;

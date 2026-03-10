@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include "ofEvent.h"
+#include "ofEvents.h"
 
 #ifdef ofxAddons_ENABLE_IMGUI
 #include "ofxImGui.h"
