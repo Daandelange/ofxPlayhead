@@ -48,4 +48,6 @@ Example-imgui uses ofxImGui by default, but you can disable it by removing `ofxA
 
 ## Similar / Alternatives
 
-- [ofxTimeline](https://github.com/mazbox/ofxmarek/tree/master/ofxTimeline)
+- [mazbox/ofxTimeline](https://github.com/mazbox/ofxmarek/tree/master/ofxTimeline)
+- [HeliosInteractive/ofxSimpleTimer](https://github.com/HeliosInteractive/ofxSimpleTimer)
+- [cas2void/ofxDawMetro](https://github.com/cas2void/ofxDawMetro)
