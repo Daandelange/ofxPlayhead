@@ -9,7 +9,7 @@
 
 #ifdef ofxAddons_ENABLE_IMGUI
 const double ofxPlayhead::speedMin = -10;
-const double ofxPlayhead::speedMax = -10;
+const double ofxPlayhead::speedMax = 10;
 #endif
 // - - - - - - - - - -
 
